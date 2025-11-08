@@ -22,5 +22,6 @@ data class RemoteMovie(
     @SerialName("original_title") val originalTitle: String,
     @SerialName("original_language") val originalLanguage: String,
     val popularity: Double,
-    @SerialName("vote_average") val voteAverage: Double
+    @SerialName("vote_average") val voteAverage: Double,
+    //val backdropPath: String?
 )

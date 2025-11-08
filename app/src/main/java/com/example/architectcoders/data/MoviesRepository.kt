@@ -1,6 +1,6 @@
 package com.example.architectcoders.data
 
-class MoviesRepository {
+class MoviesRepository() {
 
     suspend fun fetchPopularMovies(region: String): List<Movie> =
         MoviesClient
@@ -21,5 +21,12 @@ class MoviesRepository {
         Movie(
             id = id,
             title = title,
-            poster = "https://image.tmdb.org/t/p/w185/$posterPath"
-    )
+            overview = overview,
+            releaseDate = releaseDate,
+            poster = "https://image.tmdb.org/t/p/w185/$posterPath",
+           // backdrop = posterPath.let { "https://image.tmdb.org/t/p/w780/$it" },
+            originalTitle = originalTitle,
+            originalLanguage = originalLanguage,
+            popularity = popularity,
+            voteAverage = voteAverage
+        )
