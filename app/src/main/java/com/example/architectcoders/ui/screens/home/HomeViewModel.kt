@@ -1,9 +1,5 @@
 package com.example.architectcoders.ui.screens.home
 
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.util.fastFirst
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,17 +11,37 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val repository: MoviesRepository
+) : ViewModel() {
 
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> get() = _state.asStateFlow()
 
-    private val repository = MoviesRepository()
-    
-    fun onUiReady(region: String){
+    fun onUiReady(){
         viewModelScope.launch {
-            _state.value = UiState(loading = true)
-            _state.value = UiState(loading = false, movies = repository.fetchPopularMovies(region))
+            //_state.value = UiState(loading = true)
+            //_state.value = UiState(loading = false, movies = repository.fetchPopularMovies(region))
+            _state.update {
+                it.copy(loading = true)
+            }
+            _state.update {
+                it.copy(loading = false, movies = repository.fetchPopularMovies())
+            }
+            //sacamos de la lista, las que se van agregando como favorite
+            _state.update { currentState ->
+                val favoriteIds = currentState.moviesFavorite.map { it.id }.toSet()
+
+                val updatedMovies = currentState.movies.filter { movie ->
+                    movie.id !in favoriteIds
+                }
+                currentState.copy(movies = updatedMovies)
+            }
+            //_state.update { it.copy(movies = _state.value.movies.filter { it.id != _state.value.movie?.id })}
+            //recuperamos los movies que ya estan como favorite
+            _state.update {
+                it.copy(moviesFavorite = _state.value.moviesFavorite, movie = null)
+            }
         }
     }
 
@@ -55,7 +71,6 @@ class HomeViewModel : ViewModel() {
                     }
                 }
             }
-
         }
 
     }

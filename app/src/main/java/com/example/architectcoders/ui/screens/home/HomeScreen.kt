@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -20,40 +19,28 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.architectcoders.data.Movie
 import com.example.architectcoders.R
 import com.example.architectcoders.ui.common.LoadingProgressIndicator
 import com.example.architectcoders.ui.common.PermissionRequestEffect
-import com.example.architectcoders.ui.common.getRegion
 import com.example.architectcoders.ui.theme.ArchitectCodersTheme
-import kotlinx.coroutines.launch
 
 @Composable
 fun Screen(content: @Composable () -> Unit) {
@@ -70,12 +57,13 @@ fun Screen(content: @Composable () -> Unit) {
 fun HomeScreen(
     repositoryFavorite: MovieFavoriteRepository,
     onClick: (Movie) -> Unit,
-    vm: HomeViewModel = viewModel()
+    vm: HomeViewModel
 ){
 
     val homeState = rememberHomeState()
 
-    homeState.AskRegionEffect { vm.onUiReady(it) }
+    PermissionRequestEffect(permission = Manifest.permission.ACCESS_COARSE_LOCATION){
+        vm.onUiReady() }
 
 
     val favoritedMovieId by repositoryFavorite.favoriteStatusId.collectAsState()
@@ -110,8 +98,7 @@ fun HomeScreen(
                     topBar = {
                         TopAppBar(
                             title = {
-                                //Text(text = stringResource(id = R.string.app_name))
-                                Text(favoritedMovieId.toString())
+                                Text(text = stringResource(id = R.string.app_name))
                             },
                             scrollBehavior = homeState.scrollBehavior
                         )
@@ -172,7 +159,9 @@ fun HomeScreen(
                     state.movie?.let { movie ->
                         PanelInformacionMovie(
                             movie = movie,
-                            onClick = { onClick(movie) }
+                            onClick = {
+                                onClick(movie)
+                            }
                         )
                     }
                 }
@@ -201,8 +190,8 @@ fun HomeScreen(
                             MovieItem(
                                 movie = movie,
                                 onClick = {
-                                    //onClick(movie)
-                                    vm.onUiReadyMovie(movie.id)
+                                    onClick(movie)
+                                    //vm.onUiReadyMovie(movie.id)
                                     //movieId = state.movie
                                 }
                             )

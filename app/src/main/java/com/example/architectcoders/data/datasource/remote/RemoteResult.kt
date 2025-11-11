@@ -1,4 +1,4 @@
-package com.example.architectcoders.data
+package com.example.architectcoders.data.datasource.remote
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

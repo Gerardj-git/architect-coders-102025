@@ -1,7 +1,5 @@
 package com.example.architectcoders.ui.screens.detail
 
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.architectcoders.data.Movie
@@ -13,8 +11,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class DetailViewModel(private val id: Int, private val repositoryFavorite: MovieFavoriteRepository): ViewModel() {
-    private val repository = MoviesRepository()
+class DetailViewModel(
+    private val id: Int,
+    private val repositoryFavorite: MovieFavoriteRepository,
+    private val repository: MoviesRepository
+): ViewModel() {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> get() = _state.asStateFlow()
 

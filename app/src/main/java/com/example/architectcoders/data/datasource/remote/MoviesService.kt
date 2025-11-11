@@ -1,4 +1,4 @@
-package com.example.architectcoders.data
+package com.example.architectcoders.data.datasource.remote
 
 import retrofit2.http.GET
 import retrofit2.http.Path

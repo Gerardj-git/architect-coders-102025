@@ -1,32 +1,29 @@
 package com.example.architectcoders.data
 
-class MoviesRepository() {
+import com.example.architectcoders.data.datasource.MoviesLocalDataSource
+import com.example.architectcoders.data.datasource.MoviesRemoteDataSource
 
-    suspend fun fetchPopularMovies(region: String): List<Movie> =
-        MoviesClient
-            .instance
-            .fetchPopularMovies(region)
-            .results
-            .map { it.toDomainModel() }
+class MoviesRepository(
+    private val regionRepository: RegionRepository,
+    private val localDataSource: MoviesLocalDataSource,
+    private val remoteDataSource: MoviesRemoteDataSource
+) {
 
-    suspend fun findMovieById(id: Int): Movie =
-        MoviesClient
-            .instance
-            .fetchMovieById(id)
-            .toDomainModel()
+    suspend fun fetchPopularMovies(): List<Movie> {
+        if (localDataSource.isEmpty()){
+            val region = regionRepository.findLastRegion()
+            val movies = remoteDataSource.fetchPopularMovies(region)
+            localDataSource.saveMovies(movies)
+        }
+        return localDataSource.fetchPopularMovies()
+    }
+
+    suspend fun findMovieById(id: Int): Movie {
+        if(localDataSource.findMovieById(id) == null){
+            val movie = remoteDataSource.findMovieById(id)
+            localDataSource.saveMovies(listOf(movie))
+        }
+        return checkNotNull(localDataSource.findMovieById(id))
+    }
 
 }
-
-    private fun RemoteMovie.toDomainModel(): Movie =
-        Movie(
-            id = id,
-            title = title,
-            overview = overview,
-            releaseDate = releaseDate,
-            poster = "https://image.tmdb.org/t/p/w185/$posterPath",
-           // backdrop = posterPath.let { "https://image.tmdb.org/t/p/w780/$it" },
-            originalTitle = originalTitle,
-            originalLanguage = originalLanguage,
-            popularity = popularity,
-            voteAverage = voteAverage
-        )

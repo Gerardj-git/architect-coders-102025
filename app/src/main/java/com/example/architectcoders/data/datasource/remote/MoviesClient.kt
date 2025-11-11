@@ -1,4 +1,4 @@
-package com.example.architectcoders.data
+package com.example.architectcoders.data.datasource.remote
 
 import com.example.architectcoders.BuildConfig
 import kotlinx.serialization.json.Json
