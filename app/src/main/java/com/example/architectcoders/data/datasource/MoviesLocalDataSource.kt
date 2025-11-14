@@ -7,7 +7,7 @@ class MoviesLocalDataSource(private val moviesDao: MoviesDao) {
 
     val movies = moviesDao.fetchPopularMovies()
 
-    fun findMovieById(id: Int) = moviesDao.findMovieById(id)
+    fun findMovieById(id: Int?) = moviesDao.findMovieById(id)
 
     suspend fun deleteFindMovieById(id: Int) = moviesDao.deleteFindMovieById(id)
 

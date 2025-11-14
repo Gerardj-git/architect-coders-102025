@@ -4,20 +4,68 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.architectcoders.data.Movie
 import com.example.architectcoders.data.MoviesRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val repository: MoviesRepository
 ) : ViewModel() {
+    
+    private val uiReady = MutableStateFlow(false)
+    private val selectedMovie = MutableStateFlow<Int?>(null)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val state: StateFlow<UiState> = uiReady
+        .filter{ it }
+        .flatMapLatest { ready ->
+            if(ready) {
+                selectedMovie.flatMapLatest { id ->
+                    val movieCentralFlow = if (id == null) {
+                        MutableStateFlow<Movie?>(null)
+                    } else {
+                        // Si hay ID, buscamos la película en el repositorio.
+                        repository.findMovieById(id)
+                    }
 
-    private val _state = MutableStateFlow(UiState())
-    val state: StateFlow<UiState> get() = _state.asStateFlow()
+                    combine(repository.movies, movieCentralFlow) { moviesList, movieCent ->
+                        val (listFavorite, listNoFavorite) = moviesList.partition { movie ->
+                            movie.favorite
+                        }
 
-   init{
+                        val topList = if (movieCent != null) {
+                                            listNoFavorite.filter { it.id != movieCent.id }
+                                        } else {
+                                            listNoFavorite
+                                        }
+                        UiState(
+                            loading = false,
+                            movies = topList,
+                            moviesFavorite = listFavorite,
+                            movie = movieCent
+                        )
+
+                    }
+                }
+            } else {
+                MutableStateFlow(UiState(loading = true))
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = UiState(loading = true)
+        )
+
+   fun onUiReady() {
+       uiReady.value = true
+/*
         viewModelScope.launch {
             _state.update {
                 it.copy(loading = true, movies = emptyList(), moviesFavorite = emptyList())
@@ -38,45 +86,27 @@ class HomeViewModel(
                 }
             }
         }
-    }
-
-    fun onUiReadyMovie(id: Int){
-        viewModelScope.launch {
-
-            _state.value.movie?.let { movie ->
-                _state.update {
-                    it.copy(movies = _state.value.movies + movie)
-                }
-            }
-
-            _state.update {
-                it.copy(movies = _state.value.movies.filter { movie ->
-                    movie.id != id
-                }, movie = null)
-            }
-
-            repository.findMovieById(id).collect {movie ->
-                _state.update {
-                    it.copy(movie = movie)
-                }
-            }
-
-            //repository.deleteFindMovieById(id)
-
-
-
-        }
+*/
 
     }
 
+    fun onMovieClicked(id: Int){
+        selectedMovie.value = id
+    }
+
+    fun onCentralMovieConsumed() {
+        selectedMovie.value = null
+    }
     fun onUiDeleteMovie(){
         viewModelScope.launch {
-            val movieToDelete = _state.value.movie?.id ?: return@launch
-            _state.update { it.copy(movie = null) }
+            val movieToDelete = selectedMovie.value ?: return@launch
             repository.deleteFindMovieById(movieToDelete)
+            selectedMovie.value = null
+
         }
     }
 
+    /*
     fun updateMovieStatus(
         id: Int,
         isFavorite: Boolean
@@ -91,7 +121,7 @@ class HomeViewModel(
             }
         }
     }
-
+    */
 
     data class UiState(
         val loading: Boolean = false,

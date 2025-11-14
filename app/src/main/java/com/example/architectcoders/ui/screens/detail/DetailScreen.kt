@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -68,7 +69,8 @@ fun DetailScreen(vm: DetailViewModel = viewModel(), onBack: () -> Unit){
                 }){
                     Icon(
                         imageVector = if(favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = stringResource(id = R.string.back)
+                        contentDescription = stringResource(id = R.string.back),
+                        tint = if(favorite) Color.Red else Color.White
                     )
                 }
             },

@@ -16,14 +16,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,7 +73,7 @@ fun HomeScreen(
     val homeState = rememberHomeState()
 
     PermissionRequestEffect(permission = Manifest.permission.ACCESS_COARSE_LOCATION){
-        //vm.onUiReady()
+        vm.onUiReady()
     }
 
 
@@ -81,7 +82,7 @@ fun HomeScreen(
     LaunchedEffect(favoritedMovieId) {
         favoritedMovieId?.let { id ->
             // Le indica al HomeViewModel que actualice la lista de la UI.
-            vm.updateMovieStatus(id, isFavorite = true)
+            //vm.updateMovieStatus(id, isFavorite = true)
 
             // 3. **Consume la información** para evitar que se procese dos veces.
             repositoryFavorite.consumeFavoriteMovieId()
@@ -134,7 +135,7 @@ fun HomeScreen(
                                 movie = movie,
                                 onClick = {
                                     //onClick(movie)
-                                    vm.onUiReadyMovie(movie.id)
+                                    vm.onMovieClicked(movie.id)
                                     //movieId = state.movie
                                 }
                             )
@@ -171,9 +172,14 @@ fun HomeScreen(
                             movie = movie,
                             onClick = {
                                 onClick(movie)
+
+                                vm.onCentralMovieConsumed()
                             },
                             onClickDel = {
                                 vm.onUiDeleteMovie()
+                            },
+                            onClickClear = {
+                                vm.onCentralMovieConsumed()
                             }
                         )
                     }
@@ -226,14 +232,28 @@ fun MovieItem(movie: Movie, onClick: () -> Unit){
         modifier = Modifier
             .clickable(onClick = onClick)
     ) {
-        AsyncImage(
-            model = movie.poster,
-            contentDescription = movie.title,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2 / 3f)
-                .clip(MaterialTheme.shapes.small)
-        )
+        Box() {
+            AsyncImage(
+                model = movie.poster,
+                contentDescription = movie.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(2 / 3f)
+                    .clip(MaterialTheme.shapes.small)
+            )
+            if (movie.favorite) {
+                Icon(
+                    imageVector = Icons.Default.Favorite,
+                    contentDescription = stringResource(R.string.favorite),
+                    tint = MaterialTheme.colorScheme.inverseOnSurface,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(Alignment.TopEnd)
+                )
+            }
+        }
+
+
         /*
         Text(
             text = movie.title,
@@ -248,7 +268,7 @@ fun MovieItem(movie: Movie, onClick: () -> Unit){
 }
 
 @Composable
-fun PanelInformacionMovie(movie: Movie, onClick: () -> Unit, onClickDel: () -> Unit){
+fun PanelInformacionMovie(movie: Movie, onClick: () -> Unit, onClickDel: () -> Unit, onClickClear: () -> Unit){
 
     Row (
         modifier = Modifier
@@ -268,32 +288,61 @@ fun PanelInformacionMovie(movie: Movie, onClick: () -> Unit, onClickDel: () -> U
                     .clip(MaterialTheme.shapes.small)
             )
             Row(
-                horizontalArrangement = Arrangement.Start
+                modifier = Modifier
+                    .width(80.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                val iconModifier = Modifier.size(24.dp)
+
                 IconButton(
                     onClick = {
-                        onClick()
-                    }
+                        onClickClear()
+                    },
+                    modifier = Modifier
+                        .size(28.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = movie.title
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Limpiar selección",
+                        tint = Color.Black,
+                        modifier = iconModifier
                     )
                 }
                 IconButton(
-                    onClick = { onClickDel() }
+                    onClick = {
+                        onClick()
+                    },
+                    modifier = Modifier
+                        .size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Ver detalle",
+                        modifier = iconModifier
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        onClickDel()
+                              },
+                    modifier = Modifier
+                        .size(28.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = movie.title,
-                        tint = Color.Red
+                        contentDescription = "Borrar película",
+                        tint = Color.Red,
+                        modifier = iconModifier
                     )
                 }
             }
 
         }
 
-        Column {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
             Text(
                 text = movie.title,
                 style = MaterialTheme.typography.bodySmall,

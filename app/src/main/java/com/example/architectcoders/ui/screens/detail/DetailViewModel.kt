@@ -5,28 +5,26 @@ import androidx.lifecycle.viewModelScope
 import com.example.architectcoders.data.Movie
 import com.example.architectcoders.data.MoviesRepository
 import com.example.architectcoders.ui.screens.home.MovieFavoriteRepository
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class DetailViewModel(
-    private val id: Int,
+    id: Int,
     private val repositoryFavorite: MovieFavoriteRepository,
     private val repository: MoviesRepository
 ): ViewModel() {
-    private val _state = MutableStateFlow(UiState())
-    val state: StateFlow<UiState> get() = _state.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            _state.value = UiState(loading = true)
-            repository.findMovieById(id).collect {movie ->
-                _state.value = UiState(loading = false, movie = movie)
-            }
+    val state: StateFlow<UiState> = repository.findMovieById(id)
+        .map { movie ->
+            UiState(movie = movie)
         }
-    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = UiState(loading = true))
+
     data class UiState(
         val loading: Boolean = false,
         val movie: Movie? = null

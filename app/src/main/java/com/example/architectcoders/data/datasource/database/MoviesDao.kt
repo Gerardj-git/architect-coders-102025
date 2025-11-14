@@ -14,7 +14,7 @@ interface MoviesDao {
     fun fetchPopularMovies(): Flow<List<Movie>>
 
     @Query("Select * from Movie where id = :id")
-    fun findMovieById(id: Int): Flow<Movie?>
+    fun findMovieById(id: Int?): Flow<Movie?>
 
     @Query("Select count(1) from Movie")
     suspend fun countMovies(): Int

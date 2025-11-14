@@ -13,7 +13,7 @@ class MoviesRemoteDataSource {
             .results
             .map { it.toDomainModel() }
 
-    suspend fun findMovieById(id: Int): Movie =
+    suspend fun findMovieById(id: Int?): Movie =
         MoviesClient
             .instance
             .fetchMovieById(id)
