@@ -20,7 +20,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -30,8 +36,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.AbsoluteAlignment
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -63,7 +72,8 @@ fun HomeScreen(
     val homeState = rememberHomeState()
 
     PermissionRequestEffect(permission = Manifest.permission.ACCESS_COARSE_LOCATION){
-        vm.onUiReady() }
+        //vm.onUiReady()
+    }
 
 
     val favoritedMovieId by repositoryFavorite.favoriteStatusId.collectAsState()
@@ -161,6 +171,9 @@ fun HomeScreen(
                             movie = movie,
                             onClick = {
                                 onClick(movie)
+                            },
+                            onClickDel = {
+                                vm.onUiDeleteMovie()
                             }
                         )
                     }
@@ -235,23 +248,51 @@ fun MovieItem(movie: Movie, onClick: () -> Unit){
 }
 
 @Composable
-fun PanelInformacionMovie(movie: Movie, onClick: () -> Unit){
+fun PanelInformacionMovie(movie: Movie, onClick: () -> Unit, onClickDel: () -> Unit){
 
     Row (
         modifier = Modifier
             .fillMaxSize()
-            .clickable(onClick = onClick)
     ) {
-        AsyncImage(
-            model = movie.poster,
-            contentDescription = movie.title,
-            modifier = Modifier
-               // .fillMaxWidth()
-                //.aspectRatio(2 / 3f)
-                .height(120.dp)
-                .width(80.dp)
-                .clip(MaterialTheme.shapes.small)
-        )
+        Column(
+
+        ) {
+            AsyncImage(
+                model = movie.poster,
+                contentDescription = movie.title,
+                modifier = Modifier
+                    // .fillMaxWidth()
+                    //.aspectRatio(2 / 3f)
+                    .height(120.dp)
+                    .width(80.dp)
+                    .clip(MaterialTheme.shapes.small)
+            )
+            Row(
+                horizontalArrangement = Arrangement.Start
+            ) {
+                IconButton(
+                    onClick = {
+                        onClick()
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = movie.title
+                    )
+                }
+                IconButton(
+                    onClick = { onClickDel() }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = movie.title,
+                        tint = Color.Red
+                    )
+                }
+            }
+
+        }
+
         Column {
             Text(
                 text = movie.title,

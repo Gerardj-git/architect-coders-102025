@@ -22,13 +22,14 @@ class DetailViewModel(
     init {
         viewModelScope.launch {
             _state.value = UiState(loading = true)
-            _state.value = UiState(loading = false, movie = repository.findMovieById(id))
+            repository.findMovieById(id).collect {movie ->
+                _state.value = UiState(loading = false, movie = movie)
+            }
         }
     }
     data class UiState(
         val loading: Boolean = false,
-        val movie: Movie? = null,
-        val message: String? = null
+        val movie: Movie? = null
     )
 
 /*conf un canal aparte
@@ -38,18 +39,11 @@ class DetailViewModel(
     private val _events = Channel<UiEvent>()
     val events: Flow<UiEvent> = _events.receiveAsFlow()
 */
-    fun onFavoriteClick() {
-        //_events.trySend(UiEvent.ShowMessage("Favorites clicked"))
-        repositoryFavorite.markMovieAsFavorite(id)
-
-        _state.update { movie ->
-            movie.copy(message = "Favorites clicked")
-        }
-    }
-
-    fun onMessageShown(){
-        _state.update {
-            it.copy(message = null)
+    fun onFavoriteClicked(){
+        state.value.movie?.let {
+            viewModelScope.launch {
+                repository.toogleFavorite(it)
+            }
         }
     }
 

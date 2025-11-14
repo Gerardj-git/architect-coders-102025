@@ -12,7 +12,7 @@ class App: Application() {
     override fun onCreate() {
         super.onCreate()
 
-        db = Room.databaseBuilder(this, MoviesDatabase::class.java, "movies-db")
+        db = Room.databaseBuilder(this, MoviesDatabase::class.java, "movies8-db")
             .build()
     }
 

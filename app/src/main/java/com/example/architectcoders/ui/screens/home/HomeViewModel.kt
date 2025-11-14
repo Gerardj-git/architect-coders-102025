@@ -1,6 +1,5 @@
 package com.example.architectcoders.ui.screens.home
 
-import androidx.compose.ui.util.fastFirst
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.architectcoders.data.Movie
@@ -18,44 +17,63 @@ class HomeViewModel(
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> get() = _state.asStateFlow()
 
-    fun onUiReady(){
+   init{
         viewModelScope.launch {
-            //_state.value = UiState(loading = true)
-            //_state.value = UiState(loading = false, movies = repository.fetchPopularMovies(region))
             _state.update {
-                it.copy(loading = true)
+                it.copy(loading = true, movies = emptyList(), moviesFavorite = emptyList())
             }
-            _state.update {
-                it.copy(loading = false, movies = repository.fetchPopularMovies())
-            }
-            //sacamos de la lista, las que se van agregando como favorite
-            _state.update { currentState ->
-                val favoriteIds = currentState.moviesFavorite.map { it.id }.toSet()
+            repository.movies.collect { movies ->
 
-                val updatedMovies = currentState.movies.filter { movie ->
-                    movie.id !in favoriteIds
+                val (listFavorite, listNoFavorite) = movies.partition {
+                    movie -> movie.favorite
                 }
-                currentState.copy(movies = updatedMovies)
-            }
-            //_state.update { it.copy(movies = _state.value.movies.filter { it.id != _state.value.movie?.id })}
-            //recuperamos los movies que ya estan como favorite
-            _state.update {
-                it.copy(moviesFavorite = _state.value.moviesFavorite, movie = null)
+
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        movies = listNoFavorite,
+                        moviesFavorite = listFavorite,
+                        movie = null
+                    )
+                }
             }
         }
     }
 
     fun onUiReadyMovie(id: Int){
         viewModelScope.launch {
-                _state.value.movie?.let {movie ->
+
+            _state.value.movie?.let { movie ->
                 _state.update {
                     it.copy(movies = _state.value.movies + movie)
                 }
             }
-            _state.update {it.copy(movie = _state.value.movies.fastFirst { it.id == id })}
-            _state.update { it.copy(movies = _state.value.movies.filter { it.id != id })}
-            //_state.value = _state.value.copy(movie = repository.findMovieById(id))
 
+            _state.update {
+                it.copy(movies = _state.value.movies.filter { movie ->
+                    movie.id != id
+                }, movie = null)
+            }
+
+            repository.findMovieById(id).collect {movie ->
+                _state.update {
+                    it.copy(movie = movie)
+                }
+            }
+
+            //repository.deleteFindMovieById(id)
+
+
+
+        }
+
+    }
+
+    fun onUiDeleteMovie(){
+        viewModelScope.launch {
+            val movieToDelete = _state.value.movie?.id ?: return@launch
+            _state.update { it.copy(movie = null) }
+            repository.deleteFindMovieById(movieToDelete)
         }
     }
 
@@ -64,15 +82,14 @@ class HomeViewModel(
         isFavorite: Boolean
     ) {
         viewModelScope.launch {
-            _state.value.movie?.let {movie ->
+            _state.value.movie?.let { movie ->
                 if (movie.id == id) {
                     _state.update {
-                        it.copy(moviesFavorite = _state.value.moviesFavorite + movie)
+                        it.copy(moviesFavorite = _state.value.moviesFavorite + movie, movie = null)
                     }
                 }
             }
         }
-
     }
 
 

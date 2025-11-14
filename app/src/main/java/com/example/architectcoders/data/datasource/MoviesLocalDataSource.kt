@@ -5,9 +5,11 @@ import com.example.architectcoders.data.datasource.database.MoviesDao
 
 class MoviesLocalDataSource(private val moviesDao: MoviesDao) {
 
-    suspend fun fetchPopularMovies() = moviesDao.fetchPopularMovies()
+    val movies = moviesDao.fetchPopularMovies()
 
-    suspend fun findMovieById(id: Int) = moviesDao.findMovieById(id)
+    fun findMovieById(id: Int) = moviesDao.findMovieById(id)
+
+    suspend fun deleteFindMovieById(id: Int) = moviesDao.deleteFindMovieById(id)
 
     suspend fun isEmpty() = moviesDao.countMovies() == 0
 

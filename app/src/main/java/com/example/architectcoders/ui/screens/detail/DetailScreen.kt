@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -51,10 +52,6 @@ fun DetailScreen(vm: DetailViewModel = viewModel(), onBack: () -> Unit){
     val state by vm.state.collectAsState()
     val detailState = rememberDetailState()
 
-    detailState.ShowMessageEffect(message = state.message) {
-        vm.onMessageShown()
-    }
-
     Screen {
         Scaffold(
             topBar = {
@@ -65,11 +62,12 @@ fun DetailScreen(vm: DetailViewModel = viewModel(), onBack: () -> Unit){
                 )
             },
             floatingActionButton = {
+                val favorite = state.movie?.favorite ?: false
                 FloatingActionButton(onClick = {
-                    vm.onFavoriteClick()
+                    vm.onFavoriteClicked()
                 }){
                     Icon(
-                        imageVector = Icons.Default.FavoriteBorder,
+                        imageVector = if(favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = stringResource(id = R.string.back)
                     )
                 }

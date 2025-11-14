@@ -2,6 +2,8 @@ package com.example.architectcoders.data
 
 import com.example.architectcoders.data.datasource.MoviesLocalDataSource
 import com.example.architectcoders.data.datasource.MoviesRemoteDataSource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.transform
 
 class MoviesRepository(
     private val regionRepository: RegionRepository,
@@ -9,21 +11,24 @@ class MoviesRepository(
     private val remoteDataSource: MoviesRemoteDataSource
 ) {
 
-    suspend fun fetchPopularMovies(): List<Movie> {
-        if (localDataSource.isEmpty()){
-            val region = regionRepository.findLastRegion()
-            val movies = remoteDataSource.fetchPopularMovies(region)
-            localDataSource.saveMovies(movies)
-        }
-        return localDataSource.fetchPopularMovies()
+    val movies: Flow<List<Movie>> = localDataSource.movies.transform {localMovies ->
+        val movies = localMovies.takeIf { it.isNotEmpty() }
+            ?: remoteDataSource.fetchPopularMovies(regionRepository.findLastRegion()).also {
+                localDataSource.saveMovies(it)
+            }
+        emit(movies)
     }
 
-    suspend fun findMovieById(id: Int): Movie {
-        if(localDataSource.findMovieById(id) == null){
-            val movie = remoteDataSource.findMovieById(id)
-            localDataSource.saveMovies(listOf(movie))
+    fun findMovieById(id: Int): Flow<Movie> = localDataSource.findMovieById(id).transform {localMovie ->
+        val movie = localMovie ?: remoteDataSource.findMovieById(id).also {
+            localDataSource.saveMovies(listOf(it))
         }
-        return checkNotNull(localDataSource.findMovieById(id))
+        emit(movie)
+    }
+
+    suspend fun deleteFindMovieById(id: Int) = localDataSource.deleteFindMovieById(id)
+    suspend fun toogleFavorite(movie: Movie) {
+        localDataSource.saveMovies(listOf(movie.copy(favorite = !movie.favorite)))
     }
 
 }
