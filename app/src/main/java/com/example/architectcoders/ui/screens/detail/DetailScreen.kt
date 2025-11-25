@@ -43,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.architectcoders.R
 import com.example.architectcoders.data.Movie
+import com.example.architectcoders.ui.common.AcScaffold
 import com.example.architectcoders.ui.common.LoadingProgressIndicator
 import com.example.architectcoders.ui.screens.home.MovieFavoriteRepository
 import com.example.architectcoders.ui.screens.home.Screen
@@ -51,19 +52,20 @@ import com.example.architectcoders.ui.screens.home.Screen
 fun DetailScreen(vm: DetailViewModel = viewModel(), onBack: () -> Unit){
 
     val state by vm.state.collectAsState()
-    val detailState = rememberDetailState()
+    val detailState = rememberDetailState(state = state)
 
     Screen {
-        Scaffold(
+        AcScaffold(
+            state = state,
             topBar = {
                 DetailTopBar(
-                    title = state.movie?.title ?: "",
+                    title = detailState.topBarTitle,
                     scrollBehavior = detailState.scrollBehavior,
                     onBack = onBack
                 )
             },
             floatingActionButton = {
-                val favorite = state.movie?.favorite ?: false
+                val favorite = detailState.movie?.favorite ?: false
                 FloatingActionButton(onClick = {
                     vm.onFavoriteClicked()
                 }){
@@ -78,17 +80,13 @@ fun DetailScreen(vm: DetailViewModel = viewModel(), onBack: () -> Unit){
                 SnackbarHost(hostState = detailState.snackbarHostState)
             },
             modifier = Modifier.nestedScroll(detailState.scrollBehavior.nestedScrollConnection)
-        ) {padding ->
-            if(state.loading){
-                LoadingProgressIndicator(modifier = Modifier.padding(paddingValues = padding))
-            }
+        ) {padding, movie ->
 
-            state.movie?.let { movie ->
                 MovieDetail(
                     modifier = Modifier.padding(paddingValues = padding),
                     movie = movie
-                )
-            }
+               )
+
         }
     }
 }

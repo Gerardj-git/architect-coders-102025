@@ -12,6 +12,8 @@ import androidx.navigation.navArgument
 import com.example.architectcoders.App
 import com.example.architectcoders.data.MoviesRepository
 import com.example.architectcoders.data.RegionRepository
+import com.example.architectcoders.data.datasource.FotosLocalDataSource
+import com.example.architectcoders.data.FotosRepository
 import com.example.architectcoders.data.datasource.LocationDataSource
 import com.example.architectcoders.data.datasource.MoviesLocalDataSource
 import com.example.architectcoders.data.datasource.MoviesRemoteDataSource
@@ -36,8 +38,6 @@ enum class NavArgs(val key: String){
 @Composable
 fun Navigation(){
 
-    val repositoryFavorite = MovieFavoriteRepository()
-
     val navController = rememberNavController()
     val app = LocalContext.current.applicationContext as App
     val moviesRepository = MoviesRepository(
@@ -51,22 +51,23 @@ fun Navigation(){
         MoviesRemoteDataSource()
     )
 
+    val fotosRepository = FotosRepository(FotosLocalDataSource(app.db2.fotoDao()))
+
 
     NavHost(navController = navController, startDestination = NavScreen.Home.route){
         composable(route = NavScreen.Home.route){
             HomeScreen(
-                repositoryFavorite,
                 onClick = {movie ->
                 navController.navigate(NavScreen.Detail.createRoute(movie.id))
             },
-                viewModel { HomeViewModel(moviesRepository) })
+                viewModel { HomeViewModel(moviesRepository, fotosRepository) })
         }
         composable(route = NavScreen.Detail.route,
             arguments = listOf(navArgument(NavArgs.MovieId.key){ type = NavType.IntType })
         ){ backStackEntry ->
             val movieId = requireNotNull( backStackEntry.arguments?.getInt(NavArgs.MovieId.key))
             DetailScreen(
-                viewModel{ DetailViewModel(movieId, repositoryFavorite, moviesRepository) },
+                viewModel{ DetailViewModel(movieId, moviesRepository) },
                 onBack = {
                     navController.popBackStack()
                 })

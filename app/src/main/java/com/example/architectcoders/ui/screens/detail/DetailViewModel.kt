@@ -2,28 +2,21 @@ package com.example.architectcoders.ui.screens.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.architectcoders.Result
 import com.example.architectcoders.data.Movie
 import com.example.architectcoders.data.MoviesRepository
+import com.example.architectcoders.ifSeccess
+import com.example.architectcoders.stateAsResultIn
 import com.example.architectcoders.ui.screens.home.MovieFavoriteRepository
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class DetailViewModel(
     id: Int,
-    private val repositoryFavorite: MovieFavoriteRepository,
     private val repository: MoviesRepository
 ): ViewModel() {
-    val state: StateFlow<UiState> = repository.findMovieById(id)
-        .map { movie ->
-            UiState(movie = movie)
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UiState(loading = true))
+    val state: StateFlow<Result<Movie>> = repository.findMovieById(id)
+        .stateAsResultIn(scope = viewModelScope)
 
     data class UiState(
         val loading: Boolean = false,
@@ -38,7 +31,7 @@ class DetailViewModel(
     val events: Flow<UiEvent> = _events.receiveAsFlow()
 */
     fun onFavoriteClicked(){
-        state.value.movie?.let {
+        state.value.ifSeccess {
             viewModelScope.launch {
                 repository.toogleFavorite(it)
             }

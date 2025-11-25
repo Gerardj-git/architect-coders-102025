@@ -30,7 +30,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -48,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.architectcoders.data.Movie
 import com.example.architectcoders.R
-import com.example.architectcoders.ui.common.LoadingProgressIndicator
+import com.example.architectcoders.ui.common.AcScaffold
 import com.example.architectcoders.ui.common.PermissionRequestEffect
 import com.example.architectcoders.ui.theme.ArchitectCodersTheme
 
@@ -65,7 +64,6 @@ fun Screen(content: @Composable () -> Unit) {
 
 @Composable
 fun HomeScreen(
-    repositoryFavorite: MovieFavoriteRepository,
     onClick: (Movie) -> Unit,
     vm: HomeViewModel
 ){
@@ -76,36 +74,13 @@ fun HomeScreen(
         vm.onUiReady()
     }
 
-
-    val favoritedMovieId by repositoryFavorite.favoriteStatusId.collectAsState()
-
-    LaunchedEffect(favoritedMovieId) {
-        favoritedMovieId?.let { id ->
-            // Le indica al HomeViewModel que actualice la lista de la UI.
-            //vm.updateMovieStatus(id, isFavorite = true)
-
-            // 3. **Consume la información** para evitar que se procese dos veces.
-            repositoryFavorite.consumeFavoriteMovieId()
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    )
-    {
         val state by vm.state.collectAsState()
         //var movieId = state.movie
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.4f)
-                .padding(8.dp)
-        )
-        {
+
             Screen {
-                Scaffold(
+                AcScaffold(
+                    state = state,
                     topBar = {
                         TopAppBar(
                             title = {
@@ -116,114 +91,125 @@ fun HomeScreen(
                     },
                     modifier = Modifier.nestedScroll(homeState.scrollBehavior.nestedScrollConnection),
                     contentWindowInsets = WindowInsets.safeDrawing
-                ) { padding ->
+                ) { padding, uistate ->
                     //val state = vm.state
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    )
+                    {
+                        //val state by vm.state.collectAsState()
+                        //var movieId = state.movie
 
-                    if (state.loading) {
-                        LoadingProgressIndicator(modifier = Modifier.padding(paddingValues = padding))
-                    }
-
-                    LazyHorizontalGrid(
-                        rows = GridCells.Adaptive(120.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        //modifier = Modifier.padding(horizontal = 4.dp),
-                        contentPadding = padding
-                    ) {
-                        items(state.movies) { movie ->
-                            MovieItem(
-                                movie = movie,
-                                onClick = {
-                                    //onClick(movie)
-                                    vm.onMovieClicked(movie.id)
-                                    //movieId = state.movie
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(
-            modifier = Modifier
-                .height(4.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.6f)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.5f)
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    state.movie?.let { movie ->
-                        PanelInformacionMovie(
-                            movie = movie,
-                            onClick = {
-                                onClick(movie)
-
-                                vm.onCentralMovieConsumed()
-                            },
-                            onClickDel = {
-                                vm.onUiDeleteMovie()
-                            },
-                            onClickClear = {
-                                vm.onCentralMovieConsumed()
-                            }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(0.4f)
+                                .padding(8.dp)
                         )
-                    }
-                }
-
-                Spacer(
-                    modifier = Modifier
-                        .height(4.dp)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.5f)
-                        .padding(8.dp)
-                )
-                {
-
-                    LazyHorizontalGrid(
-                        rows = GridCells.Adaptive(120.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        //modifier = Modifier.padding(horizontal = 4.dp),
-                        //contentPadding = padding
-                    ) {
-                        items(state.moviesFavorite) { movie ->
-                            MovieItem(
-                                movie = movie,
-                                onClick = {
-                                    onClick(movie)
-                                    //vm.onUiReadyMovie(movie.id)
-                                    //movieId = state.movie
+                        {
+                            LazyHorizontalGrid(
+                                rows = GridCells.Adaptive(120.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                //modifier = Modifier.padding(horizontal = 4.dp),
+                                contentPadding = padding
+                            ) {
+                                items(uistate.movies) {movie ->
+                                    MovieItem(
+                                        movie = movie,
+                                        onClick = {
+                                            //onClick(movie)
+                                            vm.onMovieClicked(movie.id)
+                                            //movieId = state.movie
+                                        }
+                                    )
                                 }
-                            )
+                            }
+                        }
+
+
+                        Spacer(
+                            modifier = Modifier
+                                .height(4.dp)
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(0.6f)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            ) {
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(0.5f)
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    uistate.movie?.let { movie ->
+                                        PanelInformacionMovie(
+                                            movie = movie,
+                                            onClick = {
+                                                onClick(movie)
+
+                                                vm.onCentralMovieConsumed()
+                                            },
+                                            onClickDel = {
+                                                vm.onUiDeleteMovie()
+                                            },
+                                            onClickClear = {
+                                                vm.onCentralMovieConsumed()
+                                            }
+                                        )
+                                    }
+                                }
+
+                                Spacer(
+                                    modifier = Modifier
+                                        .height(4.dp)
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(0.5f)
+                                        .padding(8.dp)
+                                )
+                                {
+
+                                    LazyHorizontalGrid(
+                                        rows = GridCells.Adaptive(120.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        //modifier = Modifier.padding(horizontal = 4.dp),
+                                        //contentPadding = padding
+                                    ) {
+                                        items(uistate.moviesFavorite) { movie ->
+                                            MovieItem(
+                                                movie = movie,
+                                                onClick = {
+                                                    onClick(movie)
+                                                    //vm.onUiReadyMovie(movie.id)
+                                                    //movieId = state.movie
+                                                }
+                                            )
+                                        }
+                                    }
+
+                                }
+
+                            }
+
                         }
                     }
-
                 }
 
             }
-
-        }
-
-    }
 }
 
 @Composable
